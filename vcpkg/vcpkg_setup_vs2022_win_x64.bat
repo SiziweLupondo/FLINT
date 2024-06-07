@@ -5,18 +5,13 @@ REM Requires CMake >= 3.27.1.
 REM Run using VS2022 x64 native tools command prompt.
 
 REM Ensure git is on the path.
-set GIT_PATH="C:\Program Files\Microsoft Visual Studio\2022\Professional\Common7\IDE\CommonExtensions\Microsoft\TeamFoundation\Team Explorer\Git\cmd"
+set GIT_PATH="C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\IDE\CommonExtensions\Microsoft\TeamFoundation\Team Explorer\Git\cmd"
 set PATH=%PATH%;%GIT_PATH%
 
 if not exist vcpkg (
     git clone https://github.com/microsoft/vcpkg.git
     pushd vcpkg
     call bootstrap-vcpkg.bat
-
-    REM Fix access violation errors: ensure Ninja 1.11.1
-    powershell -Command "Invoke-WebRequest https://github.com/ninja-build/ninja/releases/download/v1.11.1/ninja-win.zip -OutFile ninja-win.zip"
-    powershell -Command "Expand-Archive ninja-win.zip 'C:\Program Files\Microsoft Visual Studio\2022\Professional\Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja' -Force"
-
     popd
 )
 

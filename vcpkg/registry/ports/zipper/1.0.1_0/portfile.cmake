@@ -10,8 +10,6 @@
 #   VCPKG_TARGET_ARCHITECTURE = target architecture (x64, x86, arm)
 #
 
-include(vcpkg_common_functions)
-
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH 
     REPO sebastiandev/zipper
@@ -25,12 +23,17 @@ vcpkg_download_distfile(MINIZIP_ARCHIVE
     SHA512 c88f7bbbf679830b2046ae295ece783c751cba98dd4cf4c27fd9e7cce05d8b4a5c717a672649a22ee845b140a665d2e18f5dfe30ac71fb226f21d46e6e66b970
 )
 
-file(REMOVE_RECURSE ${SOURCE_PATH}/minizip)
+file(GLOB_RECURSE ZIPPER_SRC_HINT "${OUT_SOURCE_PATH}/zipperConfig.cmake.in")
+get_filename_component(ZIPPER_SRC ${ZIPPER_SRC_HINT} DIRECTORY)
+file(REMOVE_RECURSE ${ZIPPER_SRC}/minizip)
 
-vcpkg_extract_source_archive(${MINIZIP_ARCHIVE} ${SOURCE_PATH})
+vcpkg_extract_source_archive(minizip
+    ARCHIVE ${MINIZIP_ARCHIVE}
+    SOURCE_BASE minizip
+    WORKING_DIRECTORY ${ZIPPER_SRC}
+)
 
-file(RENAME ${SOURCE_PATH}/minizip-0b46a2b4ca317b80bc53594688883f7188ac4d08 ${SOURCE_PATH}/minizip)
-
+file(RENAME ${minizip} ${ZIPPER_SRC}/minizip)
 
 if(VCPKG_LIBRARY_LINKAGE STREQUAL static)
     set(ST_BUILD_STATIC ON)

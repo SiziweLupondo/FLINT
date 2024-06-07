@@ -11,11 +11,6 @@ if not exist vcpkg (
     git clone https://github.com/microsoft/vcpkg.git
     pushd vcpkg
     call bootstrap-vcpkg.bat
-
-    REM Fix access violation errors: ensure Ninja 1.11.1
-    powershell -Command "Invoke-WebRequest https://github.com/ninja-build/ninja/releases/download/v1.11.1/ninja-win.zip -OutFile ninja-win.zip"
-    powershell -Command "Expand-Archive ninja-win.zip 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja' -Force"
-
     popd
 )
 
