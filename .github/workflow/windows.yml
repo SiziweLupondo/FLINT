@@ -1,0 +1,80 @@
+name: Build and Package FLINT for Windows
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - develop
+
+jobs:
+  build-and-package:
+    name: Build and Package FLINT for Windows
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          ref: develop  # Checkout the develop branch
+
+      - name: Install CMake
+        run: |
+          choco install cmake --installargs '"ADD_CMAKE_TO_PATH=System"'
+          RefreshEnv.cmd
+
+      - name: Install Git
+        run: |
+          choco install git
+          RefreshEnv.cmd
+
+      - name: Install Visual Studio Build Tools
+        run: |
+          choco install visualstudio2019buildtools --package-parameters "--allWorkloads --includeRecommended"
+          RefreshEnv.cmd
+
+      - name: Install Boost libraries
+        run: |
+          choco install boost-msvc-14.2 --params "/IncludeRecommended /IncludeLibraries" -y
+          RefreshEnv.cmd
+
+      - name: Install other FLINT packages
+        run: |
+          choco install turtle-msvc-14.2 -y
+          choco install poco-msvc-14.2 -y
+          choco install libpq-msvc-14.2 -y
+          choco install gdal-msvc-14.2 -y
+          choco install sqlite3-msvc-14.2 -y
+          choco install fmt-msvc-14.2 -y
+          choco install libpqxx-msvc-14.2 -y
+          RefreshEnv.cmd
+
+      - name: Set up environment variables
+        run: |
+          set BOOST_ROOT=C:\tools\boost\boost_1_75_0
+          set PATH=%BOOST_ROOT%\lib;%PATH%
+          RefreshEnv.cmd
+
+      - name: Configure and build with CMake
+        run: |
+          mkdir build
+          cd build
+          cmake -G "Visual Studio 16 2019" `
+                -DCMAKE_INSTALL_PREFIX=..\..\.. `
+                -DVCPKG_TARGET_TRIPLET=x64-windows `
+                -DENABLE_TESTS=OFF `
+                -DENABLE_MOJA.MODULES.ZIPPER=OFF `
+                -DCMAKE_TOOLCHAIN_FILE=..\..\..\vcpkg\scripts\buildsystems\vcpkg.cmake ..
+          cmake --build . --config Release
+
+      - name: Generate event.json
+        run: |
+          echo '${{ toJson(github.event) }}' > C:\Development\moja-global\FLINT\Source\build\event.json
+
+      - name: Upload Artifact
+        if: success()
+        uses: actions/upload-artifact@v2
+        with:
+          name: FLINT Windows Artifacts
+          path: C:\Development\moja-global\FLINT\Source\build
