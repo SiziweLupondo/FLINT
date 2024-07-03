@@ -3,10 +3,10 @@ name: Build and Package FLINT for Windows
 on:
   push:
     branches:
-      - develop
+      - Windows_workflow
   pull_request:
     branches:
-      - develop
+      - Windows_workflow
 
 jobs:
   build-and-package:
@@ -17,7 +17,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
         with:
-          ref: develop  # Checkout the develop branch
+          ref: Windows_workflow  # Checkout the Windows_workflow branch
 
       - name: Install CMake
         run: |
