@@ -81,4 +81,4 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: FLINT Windows Artifacts
-          path: C:\Development\moja-global\FLINT\Source\build
+          path: C:\Development\moja-global\FLINT\Source\build  #tests
