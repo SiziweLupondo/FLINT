@@ -21,40 +21,44 @@ jobs:
 
       - name: Install CMake
         run: |
-          choco install cmake --installargs '"ADD_CMAKE_TO_PATH=System"'
-          RefreshEnv.cmd
+          $cmakeInstaller = "cmake-3.29.6-windows-x86_64.msi"
+          Invoke-WebRequest -Uri https://github.com/Kitware/CMake/releases/download/v3.29.6/$cmakeInstaller -OutFile $cmakeInstaller
+          Start-Process msiexec.exe -ArgumentList "/i", $cmakeInstaller, "/quiet", "/qn", "/norestart", "ADD_CMAKE_TO_PATH=System" -NoNewWindow -Wait
 
       - name: Install Git
         run: |
-          choco install git
-          RefreshEnv.cmd
+          $gitInstaller = "Git-2.41.0-64-bit.exe"
+          Invoke-WebRequest -Uri https://github.com/git-for-windows/git/releases/download/v2.41.0.windows.1/$gitInstaller -OutFile $gitInstaller
+          Start-Process $gitInstaller -ArgumentList "/VERYSILENT", "/NORESTART" -NoNewWindow -Wait
 
       - name: Install Visual Studio Build Tools
         run: |
-          choco install visualstudio2019buildtools --package-parameters "--allWorkloads --includeRecommended"
-          RefreshEnv.cmd
+          $vsInstaller = "vs_buildtools.exe"
+          Invoke-WebRequest -Uri https://aka.ms/vs/16/release/vs_buildtools.exe -OutFile $vsInstaller
+          Start-Process $vsInstaller -ArgumentList "--quiet", "--wait", "--norestart", "--nocache", "--installPath", "C:\BuildTools", "--add", "Microsoft.VisualStudio.Workload.VCTools;includeRecommended" -NoNewWindow -Wait
 
       - name: Install Boost libraries
         run: |
-          choco install boost-msvc-14.2 --params "/IncludeRecommended /IncludeLibraries" -y
-          RefreshEnv.cmd
+          $boostUrl = "https://boostorg.jfrog.io/artifactory/main/release/1.75.0/source/boost_1_75_0.zip"
+          Invoke-WebRequest -Uri $boostUrl -OutFile boost_1_75_0.zip
+          Expand-Archive -Path boost_1_75_0.zip -DestinationPath C:\tools\boost
+          echo "BOOST_ROOT=C:\\tools\\boost\\boost_1_75_0" >> $env:GITHUB_ENV
+          echo "PATH=C:\\tools\\boost\\boost_1_75_0\\lib;%PATH%" >> $env:GITHUB_ENV
 
       - name: Install other FLINT packages
         run: |
-          choco install turtle-msvc-14.2 -y
-          choco install poco-msvc-14.2 -y
-          choco install libpq-msvc-14.2 -y
-          choco install gdal-msvc-14.2 -y
-          choco install sqlite3-msvc-14.2 -y
-          choco install fmt-msvc-14.2 -y
-          choco install libpqxx-msvc-14.2 -y
-          RefreshEnv.cmd
-
-      - name: Set up environment variables
-        run: |
-          set BOOST_ROOT=C:\tools\boost\boost_1_75_0
-          set PATH=%BOOST_ROOT%\lib;%PATH%
-          RefreshEnv.cmd
+          $packages = @("https://example.com/turtle-msvc-14.2.zip",
+                        "https://example.com/poco-msvc-14.2.zip",
+                        "https://example.com/libpq-msvc-14.2.zip",
+                        "https://example.com/gdal-msvc-14.2.zip",
+                        "https://example.com/sqlite3-msvc-14.2.zip",
+                        "https://example.com/fmt-msvc-14.2.zip",
+                        "https://example.com/libpqxx-msvc-14.2.zip")
+          foreach ($package in $packages) {
+            $fileName = [System.IO.Path]::GetFileName($package)
+            Invoke-WebRequest -Uri $package -OutFile $fileName
+            Expand-Archive -Path $fileName -DestinationPath C:\tools
+          }
 
       - name: Configure and build with CMake
         run: |
@@ -77,4 +81,4 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: FLINT Windows Artifacts
-          path: C:\Development\moja-global\FLINT\Source\build   #tests are done here
+          path: C:\Development\moja-global\FLINT\Source\build
