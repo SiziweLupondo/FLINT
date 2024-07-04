@@ -1,84 +1,64 @@
-name: Build and Package FLINT for Windows
+name: Build and Package FLINT for Windows with VCPKG
 
 on:
   push:
-    branches:
-      - Windows_workflow
+    branches: 
+          - main
+          - master
+          - develop
+          - Windows_workflow
   pull_request:
-    branches:
-      - Windows_workflow
+    branches: 
+           - main
+           - master
+           - develop
+           - Windows_workflow
 
 jobs:
-  build-and-package:
-    name: Build and Package FLINT for Windows
+  build:
     runs-on: windows-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-        with:
-          ref: Windows_workflow  # Checkout the Windows_workflow branch
+    - name: Checkout repository
+      uses: actions/checkout@v2
 
-      - name: Install CMake
-        run: |
-          $cmakeInstaller = "cmake-3.29.6-windows-x86_64.msi"
-          Invoke-WebRequest -Uri https://github.com/Kitware/CMake/releases/download/v3.29.6/$cmakeInstaller -OutFile $cmakeInstaller
-          Start-Process msiexec.exe -ArgumentList "/i", $cmakeInstaller, "/quiet", "/qn", "/norestart", "ADD_CMAKE_TO_PATH=System" -NoNewWindow -Wait
+    - name: Set up Visual Studio 2022
+      uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: x64
+        version: 17  
 
-      - name: Install Git
-        run: |
-          $gitInstaller = "Git-2.41.0-64-bit.exe"
-          Invoke-WebRequest -Uri https://github.com/git-for-windows/git/releases/download/v2.41.0.windows.1/$gitInstaller -OutFile $gitInstaller
-          Start-Process $gitInstaller -ArgumentList "/VERYSILENT", "/NORESTART" -NoNewWindow -Wait
+    - name: Cache vcpkg
+      uses: actions/cache@v3
+      with:
+        path: vcpkg
+        key: vcpkg-${{ runner.os }}-${{ hashFiles('Source/vcpkg.json') }}
+        restore-keys: |
+          vcpkg-${{ runner.os }}-
 
-      - name: Install Visual Studio Build Tools
-        run: |
-          $vsInstaller = "vs_buildtools.exe"
-          Invoke-WebRequest -Uri https://aka.ms/vs/16/release/vs_buildtools.exe -OutFile $vsInstaller
-          Start-Process $vsInstaller -ArgumentList "--quiet", "--wait", "--norestart", "--nocache", "--installPath", "C:\BuildTools", "--add", "Microsoft.VisualStudio.Workload.VCTools;includeRecommended" -NoNewWindow -Wait
+    - name: Install and run Dependencies
+      shell: pwsh
+      run: |
+         pushd vcpkg
+         .\vcpkg_setup_vs2022_win_x64.bat
+         popd
+         
+    - name: Create executable package
+      shell: pwsh
+      run: |
+        pushd Source/build
+        ls
+        Compress-Archive -Path * -DestinationPath moja-flint.zip -Force 
+        Move-Item -Path *.zip -Destination ../../moja-flint.zip 
+        popd
 
-      - name: Install Boost libraries
-        run: |
-          $boostUrl = "https://boostorg.jfrog.io/artifactory/main/release/1.75.0/source/boost_1_75_0.zip"
-          Invoke-WebRequest -Uri $boostUrl -OutFile boost_1_75_0.zip
-          Expand-Archive -Path boost_1_75_0.zip -DestinationPath C:\tools\boost
-          echo "BOOST_ROOT=C:\\tools\\boost\\boost_1_75_0" >> $env:GITHUB_ENV
-          echo "PATH=C:\\tools\\boost\\boost_1_75_0\\lib;%PATH%" >> $env:GITHUB_ENV
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: moja-flint
+        path: moja-flint.zip
 
-      - name: Install other FLINT packages
-        run: |
-          $packages = @("https://example.com/turtle-msvc-14.2.zip",
-                        "https://example.com/poco-msvc-14.2.zip",
-                        "https://example.com/libpq-msvc-14.2.zip",
-                        "https://example.com/gdal-msvc-14.2.zip",
-                        "https://example.com/sqlite3-msvc-14.2.zip",
-                        "https://example.com/fmt-msvc-14.2.zip",
-                        "https://example.com/libpqxx-msvc-14.2.zip")
-          foreach ($package in $packages) {
-            $fileName = [System.IO.Path]::GetFileName($package)
-            Invoke-WebRequest -Uri $package -OutFile $fileName
-            Expand-Archive -Path $fileName -DestinationPath C:\tools
-          }
-
-      - name: Configure and build with CMake
-        run: |
-          mkdir build
-          cd build
-          cmake -G "Visual Studio 16 2019" `
-                -DCMAKE_INSTALL_PREFIX=..\..\.. `
-                -DVCPKG_TARGET_TRIPLET=x64-windows `
-                -DENABLE_TESTS=OFF `
-                -DENABLE_MOJA.MODULES.ZIPPER=OFF `
-                -DCMAKE_TOOLCHAIN_FILE=..\..\..\vcpkg\scripts\buildsystems\vcpkg.cmake ..
-          cmake --build . --config Release
-
-      - name: Generate event.json
-        run: |
-          echo '${{ toJson(github.event) }}' > C:\Development\moja-global\FLINT\Source\build\event.json
-
-      - name: Upload Artifact
-        if: success()
-        uses: actions/upload-artifact@v2
-        with:
-          name: FLINT Windows Artifacts
-          path: C:\Development\moja-global\FLINT\Source\build  #tests
+    - name: Clean up after build
+      shell: pwsh
+      run: |
+        Remove-Item -Recurse -Force Source\build
