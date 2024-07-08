@@ -3,16 +3,16 @@ name: Build and Package FLINT for Windows with VCPKG
 on:
   push:
     branches: 
-          - main
-          - master
-          - develop
-          - Windows_workflow
+      - main
+      - master
+      - develop
+      - Windows_workflow
   pull_request:
     branches: 
-           - main
-           - master
-           - develop
-           - Windows_workflow
+      - main
+      - master
+      - develop
+      - Windows_workflow
 
 jobs:
   build:
@@ -43,22 +43,27 @@ jobs:
          .\vcpkg_setup_vs2022_win_x64.bat
          popd
          
-    - name: Create executable package
+    - name: Configure and build with CMake
       shell: pwsh
       run: |
-        pushd Source/build
-        ls
-        Compress-Archive -Path * -DestinationPath moja-flint.zip -Force 
-        Move-Item -Path *.zip -Destination ../../moja-flint.zip 
-        popd
+        mkdir build
+        cd build
+        cmake -G "Visual Studio 16 2019" -A x64 ..
+        cmake --build . --config Release
+
+    - name: Package with CPack
+      shell: pwsh
+      run: |
+        cd build
+        cpack -C Release
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v2
       with:
         name: moja-flint
-        path: moja-flint.zip
+        path: build/*.zip
 
     - name: Clean up after build
       shell: pwsh
       run: |
-        Remove-Item -Recurse -Force Source\build
+        Remove-Item -Recurse -Force build
