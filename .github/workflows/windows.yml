@@ -22,7 +22,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    - name: Set up Visual Studio 2019
+    - name: Set up Visual Studio 2022
       uses: ilammy/msvc-dev-cmd@v1
       with:
         arch: x64
