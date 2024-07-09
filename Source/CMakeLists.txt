@@ -1,4 +1,16 @@
 cmake_minimum_required(VERSION 3.10.0)
+project(FLINT VERSION 1.0.0)
+
+# Add your existing configurations here
+
+# Include CPack
+include(InstallRequiredSystemLibraries)
+set(CPACK_PACKAGE_VERSION_MAJOR "${PROJECT_VERSION_MAJOR}")
+set(CPACK_PACKAGE_VERSION_MINOR "${PROJECT_VERSION_MINOR}")
+set(CPACK_PACKAGE_VERSION_PATCH "${PROJECT_VERSION_PATCH}")
+set(CPACK_GENERATOR "ZIP")
+include(CPack)
+
 project(moja VERSION 1.0.6 LANGUAGES CXX)
 
 #turn on using solution folders
@@ -20,25 +32,25 @@ set(MOJA_VERSION "${MOJA_VERSION_MAJOR}.${MOJA_VERSION_MINOR}.${MOJA_VERSION_PAT
 # set the path for custom cmake scripts
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-# Include some common macros to simpilfy the Moja CMake files
+# Include some common macros to simplify the Moja CMake files
 include(MojaMacros)
 
-# Collect the built libraries and include dirs, the will be used to create the moja.cmake file
+# Collect the built libraries and include dirs, they will be used to create the moja.cmake file
 set(Moja_COMPONENTS "")
 
 # Allow enabling and disabling components
-option(ENABLE_MOJA.MODULES.ZIPPER 					"moja.modules.zipper"			OFF)
-option(ENABLE_MOJA.MODULES.POCO 						"moja.modules.poco"				OFF)
-option(ENABLE_MOJA.MODULES.LIBPQ 						"moja.modules.libpq"			OFF)
-option(ENABLE_MOJA.MODULES.GDAL 						"moja.modules.gdal"				OFF)
-option(ENABLE_MOJA.CLI 									    "moja.cli"							  ON)
-option(ENABLE_MOJA.SYSTEMTEST 							"moja.systemtest"					OFF)
+option(ENABLE_MOJA.MODULES.ZIPPER "moja.modules.zipper" OFF)
+option(ENABLE_MOJA.MODULES.POCO "moja.modules.poco" OFF)
+option(ENABLE_MOJA.MODULES.LIBPQ "moja.modules.libpq" OFF)
+option(ENABLE_MOJA.MODULES.GDAL "moja.modules.gdal" OFF)
+option(ENABLE_MOJA.CLI "moja.cli" ON)
+option(ENABLE_MOJA.SYSTEMTEST "moja.systemtest" OFF)
 
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   set(CMAKE_INSTALL_PREFIX "C:/Development/Software/${PROJECT_NAME}" CACHE PATH "..." FORCE)
 endif()
 
-# Put the libaries and binaries that get built into directories at the
+# Put the libraries and binaries that get built into directories at the
 # top of the build tree rather than in hard-to-find leaf
 # directories. This simplifies manual testing and the use of the build
 # tree rather than installed Boost libraries.
@@ -49,11 +61,11 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 # For Debug build types, append a "d" to the library names.
 set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Set debug library postfix" FORCE)
 
-option(ENABLE_TESTS				"Set to OFF|ON (default is ON) to control build of moja tests" ON)
-option(RUN_UNIT_TESTS_ON_BUILD	"Set to OFF|ON (default is OFF) to control automatic running of moja tests at build time" OFF)
-option(MOJA_STATIC				"Set to OFF|ON (default is OFF) to control build of moja as STATIC library" OFF)
+option(ENABLE_TESTS "Set to OFF|ON (default is ON) to control build of moja tests" ON)
+option(RUN_UNIT_TESTS_ON_BUILD "Set to OFF|ON (default is OFF) to control automatic running of moja tests at build time" OFF)
+option(MOJA_STATIC "Set to OFF|ON (default is OFF) to control build of moja as STATIC library" OFF)
 
-# Uncomment from next two lines to force statitc or dynamic library, default is autodetection
+# Uncomment from next two lines to force static or dynamic library, default is autodetection
 if(MOJA_STATIC)
     add_definitions( -DMOJA_STATIC -DMOJA_NO_AUTOMATIC_LIBS)    
     set( LIB_MODE STATIC )
@@ -167,7 +179,6 @@ endif()
 foreach(component ${Moja_COMPONENTS})
 	message(STATUS "Building: ${component}")
 endforeach()
-
 
 #############################################################
 # Uninstall stuff see: http://www.vtk.org/Wiki/CMake_FAQ
