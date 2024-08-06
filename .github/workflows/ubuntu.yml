@@ -3,16 +3,12 @@ name: Build Docker Image-ubuntu
 on:
   push:
     branches:
-      - main
-      - master
       - develop
       - Docker_workflow
   pull_request:
     branches:
-      - main
-      - master
-      - develop
-      - Docker_workflow
+       - develop
+       - Docker_workflow
 
 jobs:
   build:
